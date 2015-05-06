@@ -33,14 +33,16 @@ class MultipleChoiceField(ArrayField):
         super(MultipleChoiceField, self).contribute_to_class(cls, name)
         if self.choices:
             func = (lambda self, fieldname=name,
-                    choicedict=dict(self.choices): ",".join(
+                    choicedict=dict(self.choices): ", ".join(
                         [choicedict.get(value, value) for value in getattr(
                             self, fieldname)]))
             setattr(cls, 'get_%s_display' % self.name, func)
 
     def validate(self, value, model_instance):
+        super(ArrayField, self).validate(value, model_instance)
         arr_choices = self.get_choices_selected(self.get_choices_default())
         for choice in value:
             if choice not in arr_choices:
+                print(self.error_messages)
                 raise exceptions.ValidationError(
                     self.error_messages['invalid_choice'] % value)

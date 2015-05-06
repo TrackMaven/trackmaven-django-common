@@ -43,6 +43,5 @@ class MultipleChoiceField(ArrayField):
         arr_choices = self.get_choices_selected(self.get_choices_default())
         for choice in value:
             if choice not in arr_choices:
-                print(self.error_messages)
                 raise exceptions.ValidationError(
-                    self.error_messages['invalid_choice'] % value)
+                    "{} is not a valid choice".format(choice))

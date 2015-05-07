@@ -16,4 +16,4 @@ class BaseModel(models.Model):
         """
 
         self.full_clean()
-        super(BaseModel, self).save(using='default', *args, **kwargs)
+        super(BaseModel, self).save(*args, **kwargs)

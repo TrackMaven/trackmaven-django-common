@@ -1,7 +1,7 @@
 Common utilies for Django used at TrackMaven
 ============================================
 Docs are avaible `here
-<http://trackmaven-django.readthedocs.org/en/latest/>`_.
+<http://trackmaven-django-common.readthedocs.org/en/latest/>`_.
 
 
 Installation
@@ -19,7 +19,7 @@ If you want to include this on a requirements.txt, use the following syntax...
 
     <other packages>
     --extra-index-url https://pypi.fury.io/trackmaven/
-    trackmaven-django==1.0.0
+    trackmaven-django==0.0.2
 
 
 Development

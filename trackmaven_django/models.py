@@ -82,7 +82,7 @@ class ChangedModelMixin(object):
             >>> p.changed_fields
             ["url"]
         """
-        return self.diff.keys()
+        return list(self.diff.keys())
 
     def save(self, *args, **kwargs):
         """

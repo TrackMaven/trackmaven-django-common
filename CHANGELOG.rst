@@ -11,6 +11,15 @@ Version <X>
 - <List of changes>
 - <One by one>
 
+Version 0.0.3
+-----------
+
+2016-02-18
+
+Improvements:
+- Added fields.MultipleChoiceField
+
+
 Version 0.0.2
 -----------
 

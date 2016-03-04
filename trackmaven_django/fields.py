@@ -2,38 +2,49 @@ from django.db import models
 from django.core import exceptions
 from django import forms
 from django.utils.text import capfirst
+from django.utils.six import with_metaclass
 
 
 class MultiSelectFormField(forms.MultipleChoiceField):
     widget = forms.SelectMultiple
 
 
-class MultipleChoiceField(models.Field):
+# Ensure it works with python 2 and 3
+# https://docs.djangoproject.com/en/1.7/howto/custom-model-fields/#the-subfieldbase-metaclass
+class MultipleChoiceField(with_metaclass(models.SubfieldBase, models.Field)):
     """
-    Django Custom Field for MultipleChoiceField
+    Django Custom Field for MultipleChoiceField. Behind the scenes stores
+    a list as a comma seperated string.
 
     Example:
 
        ::
 
-          from django.db import models
-          from trackmaven_drf.django_fields import MultipleChoiceField
+        from django.db import models
+        from trackmaven_django.fields import MultipleChoiceField
 
+        VALID_CHOICES = [
+            'a',
+            'b'
+        ]
 
-          class ExampleModel(models.Model):
-          channels = MultipleChoiceField(default='facebook,twitter,instagram',
-                                   choices=settings.VALID_CHANNEL_NAMES)
+        class ExampleModel(models.Model):
+            channels = MultipleChoiceField(
+                default=['a'], choices=VALID_CHOICES)
     """
     description = "A Django Custom field for storing a list of pre-set choices"
-    __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
+        kwargs['null'] = True
         super(MultipleChoiceField, self).__init__(*args, **kwargs)
 
     def formfield(self, **kwargs):
-        defaults = {'required': not self.blank,
-                    'label': capfirst(self.verbose_name),
-                    'help_text': self.help_text, 'choices': self.choices}
+        defaults = {
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text,
+            'choices': sorted(self.choices),
+        }
         if self.has_default():
             defaults['initial'] = self.get_default()
         defaults.update(kwargs)
@@ -44,51 +55,39 @@ class MultipleChoiceField(models.Field):
         return "TextField"
 
     def to_python(self, value):
-        if isinstance(value, list):
-            return value
+        if value is None:
+            cleaned = []
+        elif isinstance(value, list):
+            cleaned = value
         else:
-            return value.split(',')
+            if len(value) == 0:
+                cleaned = []
+            else:
+                cleaned = value.split(',')
+        cleaned = sorted(cleaned)
+        self.validate(cleaned)
+        return cleaned
 
     def get_prep_value(self, value):
-        if (isinstance(value, str) or
-                isinstance(value, bytes) or isinstance(value, bytearray)):
-            return value
+        if value is None:
+            return None
+        elif (isinstance(value, str) or
+              isinstance(value, bytes) or isinstance(value, bytearray)):
+            cleaned = sorted(value.split(','))
+            return ','.join(cleaned)
         elif isinstance(value, list):
-            return ','.join(value)
+            return ','.join(sorted(value))
         else:
             raise Exception('Invalid value type')
 
     def get_prep_lookup(self, lookup_type, value):
         if lookup_type == 'exact':
-            return self.get_prep_value(value)
-        elif lookup_type == 'in':
-            return [self.get_prep_value(v) for v in value]
+            return self.get_prep_value(sorted(value))
         else:
             raise TypeError(
-                    'Lookup type {} not supported.'.format(lookup_type))
+                'Lookup type {} not supported.'.format(lookup_type))
 
-    def get_choices_selected(self, arr_choices=''):
-        if not arr_choices:
-            return False
-        return [choice[0] for choice in arr_choices]
-
-    def get_choices_default(self):
-        # Don't want blanks included since this is a multi select
-        return self.get_choices(include_blank=False)
-
-    def contribute_to_class(self, cls, name):
-        # Fixes get_field_display for multiple choice fields
-        super(MultipleChoiceField, self).contribute_to_class(cls, name)
-        if self.choices:
-            func = (lambda self, fieldname=name,
-                    choicedict=dict(self.choices): ",".join(
-                        [choicedict.get(value, value) for value in getattr(
-                            self, fieldname)]))
-            setattr(cls, 'get_%s_display' % self.name, func)
-
-    def validate(self, value, model_instance):
-        arr_choices = self.get_choices_selected(self.get_choices_default())
-        for choice in value:
-            if choice not in arr_choices:
-                raise exceptions.ValidationError(
-                        'invalid_choice: %s' % value)
+    def validate(self, value):
+        for item in value:
+            if item not in sorted(self.choices):
+                raise exceptions.ValidationError('invalid_choice: %s' % item)

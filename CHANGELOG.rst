@@ -11,8 +11,35 @@ Version <X>
 - <List of changes>
 - <One by one>
 
+Version 1.0.0
+-------------
+
+2016-02-18
+
+Bug fixes:
+- Fixed an issue with the MultipleChoiceField where input were not validated.
+- Fixed an issue with the MultipleChoiceField which did not allow an empty value.
+
+Migration:
+- Changed the `choices` of the MultipleChoiceField to be a single iterable (instead of nested tuples).
+
+       ::
+
+        from django.db import models
+        from trackmaven_django.fields import MultipleChoiceField
+
+        VALID_CHOICES = [
+            'a',
+            'b'
+        ]
+
+        class ExampleModel(models.Model):
+            channels = MultipleChoiceField(
+                default=['a'], choices=VALID_CHOICES)
+
+
 Version 0.0.3
------------
+-------------
 
 2016-02-18
 
@@ -21,7 +48,7 @@ Improvements:
 
 
 Version 0.0.2
------------
+-------------
 
 2015-06-30
 

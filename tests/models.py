@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from django.db import models
 from trackmaven_django.models import BaseModel, ChangedModel
+from trackmaven_django.fields import MultipleChoiceField
 
 
 class TestModel(models.Model):
@@ -18,3 +19,14 @@ class TestBaseModel(BaseModel, TestModel):
 
 class TestChangedModel(ChangedModel, TestModel):
     pass
+
+
+VALID_CHOICES = [
+    'a',
+    'b',
+]
+
+
+class TestMultipleChoiceModel(models.Model):
+    many = MultipleChoiceField(choices=VALID_CHOICES)
+    many_default = MultipleChoiceField(choices=VALID_CHOICES, default=['b'])
